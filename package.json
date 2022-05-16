@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/dongwandonkim/tinyapp/issues"
   },
-  "homepage": "https://github.com/dongwandonkim/tinyapp#readme"
+  "homepage": "https://github.com/dongwandonkim/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
 }
