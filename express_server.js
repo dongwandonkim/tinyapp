@@ -13,7 +13,8 @@ const urlDatabase = {
 };
 
 const generateRandomString = () => {
-  let r = (Math.random() + 1).toString(36).substring(7);
+  let r = (Math.random() + 1).toString(36).substring(2, 8);
+
   return r;
 };
 
@@ -54,6 +55,14 @@ app.get('/u/:shortURL', (req, res) => {
   const {shortURL} = req.params;
   const longURL = urlDatabase[shortURL];
   res.redirect(longURL);
+});
+
+app.post('/urls/:id', (req, res) => {
+  const editedLongUrl = req.body.id;
+  const shortUrl = req.params.id;
+  urlDatabase[shortUrl] = editedLongUrl;
+
+  res.redirect('/urls');
 });
 
 app.get('/urls/:shortURL', (req, res) => {
