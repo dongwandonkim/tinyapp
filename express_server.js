@@ -34,10 +34,10 @@ const generateRandomString = () => {
   return r;
 };
 
-const checkIfEmailExist = (dbObj, emailToCheck) => {
+const findUserByEmail = (dbObj, emailToCheck) => {
   for (const key in dbObj) {
     if (users[key].email === emailToCheck) {
-      return true;
+      return users[key];
     }
   }
   return false;
@@ -47,9 +47,26 @@ app.get('/', (req, res) => {
   res.send('Hello!');
 });
 
+/** User Auth */
 app.post('/login', (req, res) => {
-  res.cookie('user_id', req.body.username);
-  res.redirect('/urls');
+  const {email, password} = req.body;
+
+  const user = findUserByEmail(users, email);
+
+  if (user && user.password === password) {
+    res.cookie('user_id', user.id);
+    return res.redirect('/urls');
+  }
+
+  res.status(403).send({message: 'invalid credentials'});
+});
+
+app.get('/login', (req, res) => {
+  const userId = req.cookies['user_id'];
+  const templateVars = {
+    username: users[userId],
+  };
+  res.render('urls_login', templateVars);
 });
 
 app.post('/logout', (req, res) => {
@@ -71,7 +88,9 @@ app.post('/register', (req, res) => {
   if (!email.length || !password.length) {
     return res.status(400).send({message: 'invalid email or password'});
   }
-  if (checkIfEmailExist(users, email)) {
+  const user = findUserByEmail(users, email);
+
+  if (user) {
     return res.status(400).send({message: 'email already in use'});
   }
 
