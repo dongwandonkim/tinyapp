@@ -93,6 +93,9 @@ app.post('/login', (req, res) => {
 
 app.get('/login', (req, res) => {
   const userId = req.cookies['user_id'];
+  if (userId) {
+    return res.redirect('/urls');
+  }
   const templateVars = {
     username: users[userId],
   };
@@ -106,6 +109,10 @@ app.post('/logout', (req, res) => {
 
 app.get('/register', (req, res) => {
   const userId = req.cookies['user_id'];
+  console.log(userId);
+  if (userId) {
+    return res.redirect('/urls');
+  }
   const templateVars = {
     username: users[userId],
   };
