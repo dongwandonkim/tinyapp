@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const bp = require('body-parser');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const PORT = 8080; // default port 8080
 
@@ -13,7 +13,13 @@ const {userAuth} = require('./middleware/userAuth');
 app.set('view engine', 'ejs');
 
 app.use(bp.urlencoded({extended: true}));
-app.use(cookieParser());
+app.use(
+  cookieSession({
+    name: 'user_id',
+    keys: ['lhl-tinyapp'],
+    maxAge: 24 * 60 * 60 * 1000,
+  })
+);
 
 const validURL = (str) => {
   const pattern = new RegExp(
@@ -35,7 +41,7 @@ const generateRandomString = () => {
 };
 
 app.get('/', (req, res) => {
-  const userId = req.cookies['user_id'];
+  const userId = req.session.user_id;
 
   if (userId === undefined || !userId) {
     return res.redirect('/login');
@@ -50,7 +56,7 @@ app.post('/login', (req, res) => {
   const user = findUserByEmail(email);
 
   if (user && bcrypt.compareSync(password, user.password)) {
-    res.cookie('user_id', user.id);
+    req.session.user_id = user.id;
     return res.redirect('/urls');
   }
 
@@ -62,7 +68,7 @@ app.post('/login', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-  const userId = req.cookies['user_id'];
+  const userId = req.session.user_id;
 
   const templateVars = {
     user: users[userId],
@@ -71,12 +77,12 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/urls');
 });
 
 app.get('/register', (req, res) => {
-  const userId = req.cookies['user_id'];
+  const userId = req.session.user_id;
 
   const templateVars = {
     user: users[userId],
@@ -102,7 +108,7 @@ app.post('/register', (req, res) => {
   const userId = generateRandomString();
   users[userId] = {id: userId, email, password: hashedPassword};
 
-  res.cookie('user_id', userId);
+  req.session.user_id = userId;
   res.redirect('/urls');
 });
 
@@ -153,7 +159,7 @@ app.post('/urls/:shortURL/delete', userAuth, (req, res) => {
 });
 
 app.get('/u/:shortURL', (req, res) => {
-  const userId = req.cookies['user_id'];
+  const userId = req.session.user_id;
   const user = users[userId];
   const {shortURL} = req.params;
 
