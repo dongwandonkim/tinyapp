@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const bp = require('body-parser');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 const PORT = 8080; // default port 8080
 
 /* local imports */
@@ -48,26 +49,21 @@ app.post('/login', (req, res) => {
 
   const user = findUserByEmail(email);
 
-  if (user && user.password === password) {
+  if (user && bcrypt.compareSync(password, user.password)) {
     res.cookie('user_id', user.id);
     return res.redirect('/urls');
   }
 
-  res
-    .status(403)
-    .render('urls_error', {
-      message: 'invalid credentials',
-      useButton: false,
-      user,
-    });
+  res.status(403).render('urls_error', {
+    message: 'invalid credentials',
+    useButton: false,
+    user,
+  });
 });
 
 app.get('/login', (req, res) => {
   const userId = req.cookies['user_id'];
 
-  // if (userId) {
-  //   return res.redirect('/urls');
-  // }
   const templateVars = {
     user: users[userId],
   };
@@ -82,13 +78,6 @@ app.post('/logout', (req, res) => {
 app.get('/register', (req, res) => {
   const userId = req.cookies['user_id'];
 
-  if (userId) {
-    console.log('user_id cookie exist /register.get');
-  }
-
-  // if (userId) {
-  //   return res.redirect('/urls');
-  // }
   const templateVars = {
     user: users[userId],
   };
@@ -101,6 +90,9 @@ app.post('/register', (req, res) => {
   if (!email.length || !password.length) {
     return res.status(400).send({message: 'invalid email or password'});
   }
+
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
   const user = findUserByEmail(email);
 
   if (user) {
@@ -108,7 +100,7 @@ app.post('/register', (req, res) => {
   }
 
   const userId = generateRandomString();
-  users[userId] = {id: userId, email, password};
+  users[userId] = {id: userId, email, password: hashedPassword};
 
   res.cookie('user_id', userId);
   res.redirect('/urls');
