@@ -23,4 +23,11 @@ describe('findUserByEmail', function () {
 
     assert.deepEqual(user.id, expectedUserID);
   });
+
+  it('should return false with invalid email', () => {
+    const user = findUserByEmail('user5@example.com', testUsers);
+    const expected = false;
+
+    assert.deepEqual(user, expected);
+  });
 });
