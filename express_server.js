@@ -53,7 +53,13 @@ app.post('/login', (req, res) => {
     return res.redirect('/urls');
   }
 
-  res.status(403).send({message: 'invalid credentials'});
+  res
+    .status(403)
+    .render('urls_error', {
+      message: 'invalid credentials',
+      useButton: false,
+      user,
+    });
 });
 
 app.get('/login', (req, res) => {
@@ -134,8 +140,8 @@ app.post('/urls', userAuth, (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-app.get('/urls/new', (req, res) => {
-  const userId = req.cookies['user_id'];
+app.get('/urls/new', userAuth, (req, res) => {
+  const userId = req.user.id;
   const templateVars = {
     user: users[userId],
   };
@@ -190,13 +196,19 @@ app.post('/urls/:id', userAuth, (req, res) => {
 
 app.get('/urls/:shortURL', userAuth, (req, res) => {
   const {shortURL} = req.params;
-  if (urlDatabase[shortURL] === undefined)
-    return res.status(400).send({message: 'invalid url'});
+  if (urlDatabase[shortURL].userId !== req.user.id)
+    return res.status(400).render('urls_error', {
+      message: 'you are not allowed access',
+      useButton: false,
+      user: req.user,
+    });
 
-  const userId = req.user.id;
-
-  if (urlDatabase[shortURL].userId !== userId) {
-    return res.status(400).send({message: 'you are not allowed'});
+  // const userId = req.user.id;
+  if (urlDatabase[shortURL].userId !== req.user.id) {
+    return res.render('urls_error', {
+      message: 'you are not the owner of this short url',
+      user: req.user,
+    });
   }
 
   let templateVars = {};
@@ -204,7 +216,7 @@ app.get('/urls/:shortURL', userAuth, (req, res) => {
     templateVars = {
       shortURL,
       longURL: urlDatabase[shortURL].longURL,
-      user: users[userId],
+      user: req.user,
     };
     return res.render('urls_show', templateVars);
   }
