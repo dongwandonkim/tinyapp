@@ -16,14 +16,14 @@ app.set('view engine', 'ejs');
 app.use(bp.urlencoded({extended: true}));
 app.use(
   cookieSession({
-    name: 'user_id',
+    name: 'session',
     keys: ['lhl-tinyapp'],
     maxAge: 24 * 60 * 60 * 1000,
   })
 );
-
+/** root */
 app.get('/', (req, res) => {
-  const userId = req.session.user_id;
+  const userId = req.session.userId;
 
   if (userId === undefined || !userId) {
     return res.redirect('/login');
@@ -37,25 +37,36 @@ app.post('/login', (req, res) => {
 
   const user = findUserByEmail(email, users);
 
-  if (user && bcrypt.compareSync(password, user.password)) {
-    req.session.user_id = user.id;
-    return res.redirect('/urls');
+  if (!user) {
+    return res.status(403).render('urls_error', {
+      message: 'invalid credentials',
+      useButton: false,
+      user: null,
+    });
   }
 
-  res.status(403).render('urls_error', {
-    message: 'invalid credentials',
-    useButton: false,
-    user,
-  });
+  const passwordCheck = bcrypt.compareSync(password, user.password);
+
+  if (!passwordCheck) {
+    return res.status(403).render('urls_error', {
+      message: 'invalid credentials',
+      useButton: false,
+      user: null,
+    });
+  }
+
+  req.session.userId = user.id;
+  res.redirect('/urls');
 });
 
 app.get('/login', (req, res) => {
-  const userId = req.session.user_id;
+  const userId = req.session.userId;
 
-  const templateVars = {
-    user: users[userId],
-  };
-  res.render('urls_login', templateVars);
+  if (userId) {
+    return res.redirect('/urls');
+  }
+
+  res.render('urls_login', {user: null});
 });
 
 app.post('/logout', (req, res) => {
@@ -64,10 +75,14 @@ app.post('/logout', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-  const userId = req.session.user_id;
+  const userId = req.session.userId;
+
+  if (userId) {
+    return res.redirect('/urls');
+  }
 
   const templateVars = {
-    user: users[userId],
+    user: null,
   };
 
   res.render('urls_register', templateVars);
@@ -83,21 +98,28 @@ app.post('/register', (req, res) => {
 
   const user = findUserByEmail(email, users);
 
+  // if user already exist in userdb, then e  rror page
   if (user) {
-    return res.status(400).send({message: 'email already in use'});
+    return res.status(400).render('urls_error', {
+      message: 'email already in use',
+      useButton: false,
+      user: null,
+    });
   }
 
   const userId = generateRandomString();
   users[userId] = {id: userId, email, password: hashedPassword};
 
-  req.session.user_id = userId;
+  req.session.userId = userId;
   res.redirect('/urls');
 });
 
+/** get urls data in json format */
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
 
+/** URLs */
 app.get('/urls', userAuth, (req, res) => {
   const userId = req.user.id;
 
@@ -140,25 +162,7 @@ app.post('/urls/:shortURL/delete', userAuth, (req, res) => {
   res.redirect('/urls');
 });
 
-app.get('/u/:shortURL', (req, res) => {
-  const userId = req.session.user_id;
-  const user = users[userId];
-  const {shortURL} = req.params;
-
-  if (!urlDatabase.hasOwnProperty(shortURL)) {
-    return res
-      .status(400)
-      .render('urls_error', {message: 'Invalid link', useButton: true, user});
-  }
-
-  const longURL = urlDatabase[shortURL].longURL;
-
-  if (validURL(longURL)) {
-    return res.redirect(longURL);
-  }
-  res.redirect(`/urls/${shortURL}`);
-});
-
+// edit url
 app.post('/urls/:id', userAuth, (req, res) => {
   const userId = req.user.id;
 
@@ -183,7 +187,6 @@ app.get('/urls/:shortURL', userAuth, (req, res) => {
       user: req.user,
     });
 
-  // const userId = req.user.id;
   if (urlDatabase[shortURL].userId !== req.user.id) {
     return res.render('urls_error', {
       message: 'you are not the owner of this short url',
@@ -204,6 +207,28 @@ app.get('/urls/:shortURL', userAuth, (req, res) => {
   res.status(400).send({message: 'url is invalid'});
 });
 
+app.get('/u/:shortURL', (req, res) => {
+  const userId = req.session.userId;
+  const user = users[userId];
+  const {shortURL} = req.params;
+
+  if (!urlDatabase.hasOwnProperty(shortURL)) {
+    return res
+      .status(400)
+      .render('urls_error', {message: 'Invalid link', useButton: true, user});
+  }
+
+  const longURL = urlDatabase[shortURL].longURL;
+
+  if (validURL(longURL)) {
+    return res.redirect(longURL);
+  }
+  res.redirect(`/urls/${shortURL}`);
+});
+
+app.get('*', (req, res) => {
+  res.status(404).render('urls_404');
+});
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });

@@ -1,3 +1,4 @@
+/** find a user from db with matching email */
 const findUserByEmail = (email, db) => {
   for (const key in db) {
     if (db[key].email === email) {
@@ -7,6 +8,7 @@ const findUserByEmail = (email, db) => {
   return false;
 };
 
+/** validates a string if string is a valid http link */
 const validURL = (str) => {
   const pattern = new RegExp(
     '^(https?:\\/\\/)?' + // protocol
@@ -20,6 +22,7 @@ const validURL = (str) => {
   return !!pattern.test(str);
 };
 
+/** generate random string of legth of 6  */
 const generateRandomString = () => {
   let r = (Math.random() + 1).toString(36).substring(2, 8);
 
