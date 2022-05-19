@@ -135,7 +135,11 @@ app.post('/urls', userAuth, (req, res) => {
   const {longURL} = req.body;
 
   if (!validURL(longURL)) {
-    return res.status(400).send({message: 'invalid link info'});
+    return res.status(400).render('urls_erroor', {
+      message: 'invalid link info',
+      useButton: false,
+      user: users[req.user.id],
+    });
   }
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {longURL, userId: req.user.id};
@@ -165,7 +169,6 @@ app.post('/urls/:shortURL/delete', userAuth, (req, res) => {
 // edit url
 app.post('/urls/:id', userAuth, (req, res) => {
   const userId = req.user.id;
-
   const editedLongUrl = req.body.id;
   const shortUrl = req.params.id;
 
@@ -229,6 +232,7 @@ app.get('/u/:shortURL', (req, res) => {
 app.get('*', (req, res) => {
   res.status(404).render('urls_404');
 });
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
