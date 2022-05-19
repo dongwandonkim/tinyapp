@@ -34,7 +34,12 @@ const generateRandomString = () => {
 };
 
 app.get('/', (req, res) => {
-  res.send('Hello!');
+  const userId = req.cookies['user_id'];
+
+  if (userId === undefined || !userId) {
+    return res.redirect('/login');
+  }
+  res.redirect('/urls');
 });
 
 /** User Auth */
@@ -58,7 +63,7 @@ app.get('/login', (req, res) => {
   //   return res.redirect('/urls');
   // }
   const templateVars = {
-    username: users[userId],
+    user: users[userId],
   };
   res.render('urls_login', templateVars);
 });
@@ -79,7 +84,7 @@ app.get('/register', (req, res) => {
   //   return res.redirect('/urls');
   // }
   const templateVars = {
-    username: users[userId],
+    user: users[userId],
   };
 
   res.render('urls_register', templateVars);
@@ -109,12 +114,12 @@ app.get('/urls.json', (req, res) => {
 
 app.get('/urls', userAuth, (req, res) => {
   const userId = req.user.id;
+
   const urls = findUrlsByUserId(userId);
   const templateVars = {
-    username: users[userId],
+    user: users[userId],
     urls,
   };
-
   res.render('urls_index', templateVars);
 });
 
@@ -132,7 +137,7 @@ app.post('/urls', userAuth, (req, res) => {
 app.get('/urls/new', (req, res) => {
   const userId = req.cookies['user_id'];
   const templateVars = {
-    username: users[userId],
+    user: users[userId],
   };
 
   res.render('urls_new', templateVars);
@@ -150,10 +155,14 @@ app.post('/urls/:shortURL/delete', userAuth, (req, res) => {
 });
 
 app.get('/u/:shortURL', (req, res) => {
+  const userId = req.cookies['user_id'];
+  const user = users[userId];
   const {shortURL} = req.params;
 
   if (!urlDatabase.hasOwnProperty(shortURL)) {
-    return res.status(400).render('urls_error');
+    return res
+      .status(400)
+      .render('urls_error', {message: 'Invalid link', useButton: true, user});
   }
 
   const longURL = urlDatabase[shortURL].longURL;
@@ -195,7 +204,7 @@ app.get('/urls/:shortURL', userAuth, (req, res) => {
     templateVars = {
       shortURL,
       longURL: urlDatabase[shortURL].longURL,
-      username: users[userId],
+      user: users[userId],
     };
     return res.render('urls_show', templateVars);
   }

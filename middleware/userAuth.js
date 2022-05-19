@@ -6,7 +6,13 @@ const userAuth = (req, res, next) => {
   const user = findUserById(userId);
 
   if (!user) {
-    return res.status(403).redirect('/login');
+    return res
+      .status(403)
+      .render('urls_error', {
+        message: 'Please login/register',
+        useButton: false,
+        user,
+      });
   }
 
   req.user = user;
