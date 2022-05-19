@@ -6,8 +6,9 @@ const bcrypt = require('bcryptjs');
 const PORT = 8080; // default port 8080
 
 /* local imports */
-const {users, findUserByEmail} = require('./db/user');
+const {users} = require('./db/user');
 const {urlDatabase, findUrlsByUserId} = require('./db/urls');
+const {findUserByEmail, generateRandomString, validURL} = require('./helpers');
 const {userAuth} = require('./middleware/userAuth');
 
 app.set('view engine', 'ejs');
@@ -20,25 +21,6 @@ app.use(
     maxAge: 24 * 60 * 60 * 1000,
   })
 );
-
-const validURL = (str) => {
-  const pattern = new RegExp(
-    '^(https?:\\/\\/)?' + // protocol
-      '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
-      '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
-      '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
-      '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
-      '(\\#[-a-z\\d_]*)?$',
-    'i'
-  ); // fragment locator
-  return !!pattern.test(str);
-};
-
-const generateRandomString = () => {
-  let r = (Math.random() + 1).toString(36).substring(2, 8);
-
-  return r;
-};
 
 app.get('/', (req, res) => {
   const userId = req.session.user_id;
@@ -53,7 +35,7 @@ app.get('/', (req, res) => {
 app.post('/login', (req, res) => {
   const {email, password} = req.body;
 
-  const user = findUserByEmail(email);
+  const user = findUserByEmail(email, users);
 
   if (user && bcrypt.compareSync(password, user.password)) {
     req.session.user_id = user.id;
@@ -99,7 +81,7 @@ app.post('/register', (req, res) => {
 
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-  const user = findUserByEmail(email);
+  const user = findUserByEmail(email, users);
 
   if (user) {
     return res.status(400).send({message: 'email already in use'});

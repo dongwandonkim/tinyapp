@@ -10,13 +10,4 @@ const findUserById = (id) => {
   return false;
 };
 
-const findUserByEmail = (emailToCheck) => {
-  for (const key in users) {
-    if (users[key].email === emailToCheck) {
-      return users[key];
-    }
-  }
-  return false;
-};
-
-module.exports = {users, findUserById, findUserByEmail};
+module.exports = {users, findUserById};
