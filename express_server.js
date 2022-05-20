@@ -149,7 +149,13 @@ app.post('/urls', userAuth, (req, res) => {
     });
   }
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = {longURL, userId: req.user.id};
+  urlDatabase[shortURL] = {
+    longURL,
+    userId: req.user.id,
+    createdAt: new Date().toLocaleDateString(),
+    views: 0,
+  };
+  console.log(urlDatabase);
   res.redirect(`/urls/${shortURL}`);
 });
 
