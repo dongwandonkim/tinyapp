@@ -238,6 +238,7 @@ app.get('/u/:shortURL', (req, res) => {
   const longURL = urlDatabase[shortURL].longURL;
 
   if (validURL(longURL)) {
+    urlDatabase[shortURL].views += 1;
     return res.redirect(longURL);
   }
   res.redirect(`/urls/${shortURL}`);
