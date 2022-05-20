@@ -5,8 +5,6 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const methodOverride = require('method-override');
 
-// override with POST having ?_method=DELETE
-
 const PORT = 8080; // default port 8080
 
 /* local imports */
@@ -155,7 +153,7 @@ app.post('/urls', userAuth, (req, res) => {
     createdAt: new Date().toLocaleDateString(),
     views: 0,
   };
-  console.log(urlDatabase);
+
   res.redirect(`/urls/${shortURL}`);
 });
 
