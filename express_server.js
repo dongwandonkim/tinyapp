@@ -215,6 +215,8 @@ app.get('/urls/:shortURL', userAuth, (req, res) => {
       shortURL,
       longURL: urlDatabase[shortURL].longURL,
       user: req.user,
+      createdAt: urlDatabase[shortURL].createdAt,
+      views: urlDatabase[shortURL].views,
     };
     return res.render('urls_show', templateVars);
   }
