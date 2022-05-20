@@ -3,6 +3,10 @@ const app = express();
 const bp = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+const methodOverride = require('method-override');
+
+// override with POST having ?_method=DELETE
+
 const PORT = 8080; // default port 8080
 
 /* local imports */
@@ -13,6 +17,7 @@ const {userAuth} = require('./middleware/userAuth');
 
 app.set('view engine', 'ejs');
 
+/** Middlewares */
 app.use(bp.urlencoded({extended: true}));
 app.use(
   cookieSession({
@@ -21,6 +26,8 @@ app.use(
     maxAge: 24 * 60 * 60 * 1000,
   })
 );
+app.use(methodOverride('_method'));
+
 /** root */
 app.get('/', (req, res) => {
   const userId = req.session.userId;
@@ -151,11 +158,10 @@ app.get('/urls/new', userAuth, (req, res) => {
   const templateVars = {
     user: users[userId],
   };
-
   res.render('urls_new', templateVars);
 });
 
-app.post('/urls/:shortURL/delete', userAuth, (req, res) => {
+app.delete('/urls/:shortURL', userAuth, (req, res) => {
   const userId = req.user.id;
   const {shortURL} = req.params;
 
