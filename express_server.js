@@ -142,8 +142,8 @@ app.post('/urls', userAuth, (req, res) => {
   const {longURL} = req.body;
 
   if (!validURL(longURL)) {
-    return res.status(400).render('urls_erroor', {
-      message: 'invalid link info',
+    return res.status(400).render('urls_error', {
+      message: 'invalid link, need valid LINK',
       useButton: false,
       user: users[req.user.id],
     });
@@ -173,7 +173,7 @@ app.delete('/urls/:shortURL', userAuth, (req, res) => {
 });
 
 // edit url
-app.post('/urls/:id', userAuth, (req, res) => {
+app.put('/urls/:id', userAuth, (req, res) => {
   const userId = req.user.id;
   const editedLongUrl = req.body.id;
   const shortUrl = req.params.id;

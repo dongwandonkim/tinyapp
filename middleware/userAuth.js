@@ -7,6 +7,7 @@ const userAuth = (req, res, next) => {
   const user = findUserById(userId); // check if found userId exists in userDB
 
   if (!user) {
+    req.session = null;
     // if user not exists in userDB render relevant msg through HTML
     return res.status(403).render('urls_error', {
       message: 'Please login/register',
